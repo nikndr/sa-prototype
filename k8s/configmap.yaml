@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sa-demo-config
+  labels:
+    app: sa-demo
+data:
+  app-version: "0.1"
+

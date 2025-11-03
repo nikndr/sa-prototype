@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sa-demo
+  labels:
+    app: sa-demo
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      app: sa-demo
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: sa-demo
+        environment: production
+      annotations:
+        version: "0.1"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: sa-demo
+        image: sa-demo:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        env:
+        - name: APP_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: sa-demo-config
+              key: app-version
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 2
+          periodSeconds: 1
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 2
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+
